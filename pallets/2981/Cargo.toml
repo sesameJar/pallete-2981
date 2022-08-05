@@ -1,0 +1,21 @@
+
+
+[package]
+name = "pallet-2981"
+version = "0.1.0"
+authors = ["Mehrad Kavian"]
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+
+frame-support = { version = "3.0.0", default-features = false }
+frame-system = { version = "3.0.0", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "frame-support/std",
+    "frame-system/std",
+]
