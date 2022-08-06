@@ -5,7 +5,7 @@
 /// I have also implemented some basic functionalities of ERC-721
 /// https://eips.ethereum.org/EIPS/eip-2981
 use frame_support::pallet_prelude::*;
-
+use sp_runtime::traits::{AtLeast32BitUnsigned, Bounded};
 use sp_std::vec::Vec;
 
 pub use pallet::*;
@@ -34,6 +34,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type TokenId: Parameter + AtLeast32BitUnsigned + Bounded + Default + Copy;
 	}
 
 
