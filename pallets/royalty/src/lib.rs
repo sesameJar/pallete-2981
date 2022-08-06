@@ -50,4 +50,12 @@ pub mod pallet {
 		TokenTransferred(T::AccountId, T::AccountId, T::TokenId),
 	}
 
+	#[pallet::error]
+	pub enum Error<T> {
+		/// When passing empty string
+		InvalidTokenURI,
+		/// Transferring tokens not owned by signer
+		NotOwner,
+	}
+
 }
