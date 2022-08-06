@@ -22,7 +22,7 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq)]
 	pub struct Token<T: Config> {
-		pub id: u32,
+		pub id: T::TokenId,
 		pub owner: T::AccountId,
 		pub royalty_precentage: u16,
 		pub royalty_receiver: T::AccountId,
