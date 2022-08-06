@@ -32,7 +32,21 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// Because this pallet emits events, it depends on the runtime's definition of an event.
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+	}
 
+
+	// Pallets use events to inform users when important changes are made.
+	// https://docs.substrate.io/main-docs/build/events-errors/
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// [Minter, TokenId, TokenURI]
+		// TokenMinted(Token<T>), ultimately I prefer this, but could not get it to work
+		TokenMinted(T::AccountId, T::TokenId, Vec<u8>),
+		/// [from, to, TokenId]
+		TokenTransferred(T::AccountId, T::AccountId, T::TokenId),
 	}
 
 }
