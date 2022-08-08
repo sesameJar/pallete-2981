@@ -16,11 +16,15 @@ pub use pallet::*;
 pub mod pallet {
 	use super::*;
 
+	// attr pallet::without_storage_info is required, without it
+	// there will be an error `the trait MaxEncodedLen is not implemented for xxx`
 	#[pallet::pallet]
+	#[pallet::without_storage_info]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	#[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq)]
+	#[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo)]
+	#[scale_info(skip_type_params(T))]
 	pub struct Token<T: Config> {
 		pub id: T::TokenId,
 		pub owner: T::AccountId,
@@ -57,5 +61,19 @@ pub mod pallet {
 		/// Transferring tokens not owned by signer
 		NotOwner,
 	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn tokens)]
+	pub(super) type Tokens<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat, T::TokenId,
+		Blake2_128Concat, T::AccountId,
+		Token<T>, OptionQuery
+	>;
+
+	/// Stores the next Token Id.
+	#[pallet::storage]
+	#[pallet::getter(fn token_pointer)]
+	pub type TokenPointer<T: Config> = StorageValue<_, T::TokenId, ValueQuery>;
 
 }
