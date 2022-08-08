@@ -5,6 +5,8 @@
 /// I have also implemented some basic functionalities of ERC-721
 /// https://eips.ethereum.org/EIPS/eip-2981
 use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
+
 use sp_runtime::traits::{AtLeast32BitUnsigned, Bounded};
 use sp_std::vec::Vec;
 
@@ -75,5 +77,52 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn token_pointer)]
 	pub type TokenPointer<T: Config> = StorageValue<_, T::TokenId, ValueQuery>;
+
+
+	#[pallet::call]
+	impl<T:Config> Pallet<T> {
+		/// Mint a new Token
+		#[pallet::weight(1000)]
+		pub fn mint(
+			origin: OriginFor<T>,
+			token_uri: Vec<u8>,
+			royalty_percentage: u16,
+			royalty_receiver: T::AccountId
+		) -> DispatchResult {
+			let _sender = ensure_signed(origin)?;
+
+
+			Ok(())
+		}
+
+
+		/// Calculate the amount royalty_receiver is supposed to receive from the given sale_amount
+		/// ultimately I want this function to be unsigned like an RPC call but could not figure it out on time
+		/// To check the result one should check for the proper event
+		#[pallet::weight(1000)]
+		pub fn royalty_info(
+			origin: OriginFor<T>,
+			token_id: T::TokenId,
+			sale_amount: u32
+		) -> DispatchResult {
+			let _sender = ensure_signed(origin)?;
+
+
+			Ok(())
+		}
+
+		/// Transfers the token
+		#[pallet::weight(1000)]
+		pub fn transfer(
+			origin: OriginFor<T>,
+			to: T::AccountId,
+			token_id: T::TokenId
+		) -> DispatchResult {
+			let _sender = ensure_signed(origin)?;
+
+
+			Ok(())
+		}
+	}
 
 }
