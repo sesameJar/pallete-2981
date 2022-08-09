@@ -7,11 +7,16 @@
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 
-use sp_runtime::traits::{AtLeast32BitUnsigned, Bounded};
+use sp_runtime::{ArithmeticError, traits::{AtLeast32BitUnsigned, Bounded, One, CheckedAdd}};
 use sp_std::vec::Vec;
 
 pub use pallet::*;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
 
 
 #[frame_support::pallet]
@@ -30,7 +35,7 @@ pub mod pallet {
 	pub struct Token<T: Config> {
 		pub id: T::TokenId,
 		pub owner: T::AccountId,
-		pub royalty_precentage: u16,
+		pub royalty_percentage: u16,
 		pub royalty_receiver: T::AccountId,
 		pub uri: Vec<u8>, // for usage of text
 	}
@@ -62,6 +67,7 @@ pub mod pallet {
 		InvalidTokenURI,
 		/// Transferring tokens not owned by signer
 		NotOwner,
+		NotExistingToken,
 	}
 
 	#[pallet::storage]
@@ -89,8 +95,21 @@ pub mod pallet {
 			royalty_percentage: u16,
 			royalty_receiver: T::AccountId
 		) -> DispatchResult {
-			let _sender = ensure_signed(origin)?;
+			let sender = ensure_signed(origin)?;
 
+			let token_id = Self::next_token_id()?;
+			let token = Token {
+				id: token_id,
+				owner: sender.clone(),
+				royalty_receiver,
+				royalty_percentage,
+				uri: token_uri.clone()
+			};
+
+			// mint and save token in the Tokens mapping
+			Tokens::<T>::insert(token_id, &sender, &token);
+			// Emit event
+			Self::deposit_event(Event::TokenMinted(sender, token_id, token_uri));
 
 			Ok(())
 		}
@@ -125,4 +144,16 @@ pub mod pallet {
 		}
 	}
 
+}
+
+impl<T: Config> Pallet<T> {
+	fn next_token_id() -> Result<T::TokenId, DispatchError> {
+		TokenPointer::<T>::try_mutate(|next_token_id| -> Result<T::TokenId, DispatchError> {
+			let current_token_id = *next_token_id;
+
+			// add 1 and check for oveflow
+			*next_token_id = next_token_id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
+			Ok(current_token_id)
+		} )
+	}
 }
