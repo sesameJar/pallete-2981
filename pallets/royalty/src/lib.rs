@@ -21,6 +21,7 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
+
 	use super::*;
 
 	// attr pallet::without_storage_info is required, without it
@@ -59,15 +60,16 @@ pub mod pallet {
 		TokenMinted(T::AccountId, T::TokenId, Vec<u8>),
 		/// [from, to, TokenId]
 		TokenTransferred(T::AccountId, T::AccountId, T::TokenId),
+		/// [royaltyReceiver, royaltyAmount]
+		RoyaltyInfo(T::AccountId, u32)
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		/// When passing empty string
 		InvalidTokenURI,
-		/// Transferring tokens not owned by signer
-		NotOwner,
-		NotExistingToken,
+		/// Transferring tokens not owned by signer or does not exists
+		InvalidTokenId,
 	}
 
 	#[pallet::storage]
@@ -122,11 +124,15 @@ pub mod pallet {
 		pub fn royalty_info(
 			origin: OriginFor<T>,
 			token_id: T::TokenId,
+			owner: T::AccountId,
 			sale_amount: u32
 		) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;
+			let token = Self::tokens(token_id, owner).ok_or(Error::<T>::InvalidTokenId)?;
 
+			let royalty_amount = (sale_amount / 10000) * (token.royalty_percentage as u32);
 
+			Self::deposit_event(Event::RoyaltyInfo(token.royalty_receiver, royalty_amount));
 			Ok(())
 		}
 
@@ -137,10 +143,26 @@ pub mod pallet {
 			to: T::AccountId,
 			token_id: T::TokenId
 		) -> DispatchResult {
-			let _sender = ensure_signed(origin)?;
+			let sender = ensure_signed(origin)?;
 
 
-			Ok(())
+			Tokens::<T>::try_mutate_exists(token_id, sender.clone(), |token| -> DispatchResult {
+				if sender == to {
+					ensure!(token.is_some(), Error::<T>::InvalidTokenId);
+					return Ok(());
+				}
+
+				// take is similar to kill but returns it
+				let mut token = token.take().ok_or(Error::<T>::InvalidTokenId)?;
+
+				token.owner = to.clone();
+
+				Tokens::<T>::insert(token_id, &to, token);
+
+				Self::deposit_event(Event::TokenTransferred(sender, to, token_id));
+
+				Ok(())
+			})
 		}
 	}
 
